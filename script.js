@@ -64,7 +64,7 @@ const displayMovements = function (movements) {
     let type = mov > 0 ? 'deposit' : 'withdrawal';
     let html = `
     <div class="movements__row">
-      <div class="movements__type movements__type--deposit">
+      <div class="movements__type movements__type--${type}">
         ${i + 1}
         ${type}
       </div>
