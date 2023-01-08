@@ -35,6 +35,7 @@ const account4 = {
 };
 
 const accounts = [account1, account2, account3, account4];
+const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
 /////////////////////////////////////////////////
 // Elements
@@ -63,6 +64,8 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+const eurToUsd = 1.1;
+
 //#region [ #1 MOVEMENT DISPLAY ]
 // A function to display movements in movements div
 const displayMovements = function (movements) {
@@ -77,25 +80,177 @@ const displayMovements = function (movements) {
             <div class="movements__type movements__type--${type}">
                 ${i + 1} ${type}
             </div>
-            <div class="movements__value">${mov}</div>
+            <div class="movements__value">${mov} EUR</div>
         </div>`;
     containerMovements.insertAdjacentHTML('afterbegin', html);
     // Added html template in movements div
   });
 };
-displayMovements(account1.movements);
 //#endregion
 
-//#region [ #2 Euro To USD - Map Method ]
-const eurToUsd = 1.1;
-const movementsUSD = account1.movements.map(function (mov) {
-  return mov * eurToUsd;
+//#region [ #2 Euro To USD - Map Method Example ]
+// const eurToUsd = 1.1;
+// const movementsUSD = account1.movements.map(function (mov) {
+//   return mov * eurToUsd;
+// });
+// console.log(movementsUSD);
+//#endregion
+
+//#region [ #3 Computing Usernames }
+
+//lowercase yaptik, bosluklardan bolduk map ile ilk elemenlari alip yeni dizi haline getirdik ve join ile diziyi( birlestirip string yaptik.
+const createUsername = function (accounts) {
+  accounts.forEach(function (account) {
+    account.username = account.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
+  });
+};
+createUsername(accounts);
+console.log(accounts);
+
+//#endregion
+
+//#region [ #4 Filter Method - Deposit and Withdrawal Arrays ]
+
+const deposits = account1.movements.filter(function (mov) {
+  return mov > 0;
 });
-console.log(movementsUSD);
+const withdrawal = account1.movements.filter(function (mov) {
+  return mov < 0;
+});
+console.log(deposits);
+console.log(withdrawal);
 //#endregion
 
-/////////////////////////////////////////////////
+//#region [ #5 Reduce Method - Balance calculated and displayed ]
 
+const calcDisplayBalance = function (movements) {
+  const balance = movements.reduce((acc, mov) => acc + mov, 0);
+  console.log(balance);
+  labelBalance.textContent = `${balance} EUR`;
+};
+//#endregion
+
+//#region [ CODING CHALLENGE #2 ]
+
+// console.log('CODING CHALLENGE #2');
+// const calcAverageHumanAge = function (ages) {
+//   const ageArr = ages.map(function (age) {
+//     if (age <= 2) {
+//       return age * 2;
+//     } else {
+//       return 16 + age * 4;
+//     }
+//   });
+//   console.log(ageArr);
+
+//   const filteredAgeArr = ageArr.filter(function (age) {
+//     return age > 18;
+//   });
+//   console.log(filteredAgeArr);
+
+//   const averageHumanAgeOfDogs = ageArr.reduce(
+//     (acc, mov) => acc + mov / filteredAgeArr.length,
+//     0
+//   );
+//   console.log(averageHumanAgeOfDogs);
+// };
+
+// calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
+// calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
+
+//#endregion
+
+//#region [ #4 Chaining Methods - EurTOUSD - in and out calculated and displayed ]
+
+const calcDisplaySummary = function (movements) {
+  const incomes = movements
+    .filter(mov => mov > 0)
+    .map(mov => mov * eurToUsd)
+    .reduce((acc, mov) => acc + mov, 0);
+  const totalIncome = Math.round(incomes);
+  labelSumIn.textContent = `${totalIncome} EUR`;
+
+  const out = movements
+    .filter(mov => mov < 0)
+    .map(mov => mov * eurToUsd)
+    .reduce((acc, mov) => acc + mov, 0);
+  const totalOut = Math.round(out);
+  labelSumOut.textContent = `${Math.abs(totalOut)} EUR`;
+
+  const interest = movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * currentAccount.interestRate) / 100)
+    .filter(int => int >= 1)
+    .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${interest} EUR`;
+};
+
+//#endregion
+
+//#region [ CODING CHALLENGE # 3 ]
+
+// console.log('CODING CHALLENGE #3');
+// const calcAverageHumanAge = function (ages) {
+//   const ageArr = ages
+//     .map(age => (age <= 2 ? age * 2 : 16 + age * 4))
+//     .filter(age => age > 18)
+//     .reduce((acc, mov) => acc + mov / ages.length, 0);
+//   console.log(ageArr);
+// };
+// calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
+
+//#endregion
+
+//#region [ #7 Find Method ]
+
+//it is not like filter method. it is not return new array.
+//it returns first element that can pass condition.
+// const account = accounts.find(acc => acc.owner === 'Jessica Davis');
+// console.log(account);
+//returns the object
+
+//#endregion
+
+//#region [ #8 Implementing Login ]
+
+//Event handlers
+let currentAccount;
+btnLogin.addEventListener('click', function (e) {
+  e.preventDefault();
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+
+  console.log(currentAccount);
+  //if current account exist and equal pins
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //display UI and message
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 1;
+    //clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginUsername.blur(); //for losing focus = remove mouse inside field
+    inputLoginPin.blur();
+    //display movements
+    displayMovements(currentAccount.movements);
+    //display balance
+    calcDisplayBalance(currentAccount.movements);
+    //display summary
+    calcDisplaySummary(currentAccount.movements);
+  } else {
+    console.log('WRONG PIN');
+  }
+});
+//#endregion
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 //#region [ FINAL CODE ]
 
 // Functions
