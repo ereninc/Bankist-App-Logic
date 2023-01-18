@@ -256,12 +256,12 @@ const calcDisplaySummary = function (acc) {
 //#region [ #8 Implementing Login ]
 
 //Event handlers
-let currentAccount;
+let currentAccount, timer;
 
 //#region FAKE ALWAYS LOGGED IN
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
+// currentAccount = account1;
+// updateUI(currentAccount);
+// containerApp.style.opacity = 100;
 
 btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
@@ -303,10 +303,15 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.blur(); //for losing focus = remove mouse inside field
     inputLoginPin.blur();
     updateUI();
+    //Timer
+    if (timer) clearInterval(timer);
+    timer = startLogOutTimer();
   } else {
     console.log('WRONG PIN');
   }
 });
+
+//#endregion
 
 function updateUI() {
   //display movements
@@ -316,7 +321,6 @@ function updateUI() {
   //display summary
   calcDisplaySummary(currentAccount);
 }
-//#endregion
 
 //#region [ #9 Implementing Transactions ]
 btnTransfer.addEventListener('click', function (e) {
@@ -345,6 +349,10 @@ btnTransfer.addEventListener('click', function (e) {
     receiverAccount.movementsDates.push(new Date().toISOString());
 
     updateUI();
+
+    //reset timer
+    clearInterval(timer);
+    timer = startLogOutTimer();
   } else {
     console.log('you cant transfer');
   }
@@ -381,10 +389,16 @@ btnLoan.addEventListener('click', function (e) {
     loanAmount > 0 && //ITS COMING FROM FLOW CHART
     currentAccount.movements.some(mov => mov >= loanAmount * 0.1)
   ) {
-    currentAccount.movements.push(loanAmount);
-    //add  transfer date
-    currentAccount.movementsDates.push(new Date().toISOString());
-    updateUI();
+    setTimeout(function () {
+      currentAccount.movements.push(loanAmount);
+      //add  transfer date
+      currentAccount.movementsDates.push(new Date().toISOString());
+      updateUI();
+
+      //reset timer
+      clearInterval(timer);
+      timer = startLogOutTimer();
+    }, 2500);
   } else {
     console.log('You cant loan that much');
   }
@@ -405,17 +419,33 @@ btnSort.addEventListener('click', function (e) {
 
 //#endregion
 
-//Num convert examples
-// const num = 3884764.23;
+//#region [ #13 Logout Timer ]
 
-// const options = {
-//   style: 'currency', //unit - percent - currency
-//   unit: 'mile-per-hour', //celcius = if its currency unit will be ignored
-//   currency: 'EUR',
-//   // useGrouping: false,
-// };
+const startLogOutTimer = function () {
+  //set time 5 minutes
+  let logoutTime = 15;
 
-// console.log('US     : ', new Intl.NumberFormat('en-US', options).format(num));
-// console.log('GR     : ', new Intl.NumberFormat('de-DE', options).format(num));
-// console.log('TR     : ', new Intl.NumberFormat('tr-TR', options).format(num));
-// console.log('Locale : ', new Intl.NumberFormat(navigator.language).format(num));
+  const tick = function () {
+    const min = String(Math.trunc(logoutTime / 60)).padStart(2, '0');
+    const sec = String(logoutTime % 60).padStart(2, '0');
+    //in each call, print remaining time
+    labelTimer.textContent = `${min}:${sec}`;
+
+    //when 0 seconds left, logout
+    if (logoutTime === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = 'Log in to get started';
+      containerApp.style.opacity = 0;
+    }
+
+    //decrease timer
+    logoutTime -= 1;
+  };
+  tick();
+
+  //call timer every second
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
+//#endregion
