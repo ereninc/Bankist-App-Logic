@@ -131,15 +131,6 @@ const formatMovementDate = function (date, locale) {
   if (daysPassed === 2) return '2 days ago';
   if (daysPassed <= 7) return `${daysPassed} days ago`;
   if (daysPassed > 7 && daysPassed <= 14) return 'A week ago';
-
-  //Changing to Intl format
-  // else {
-  //   const day = `${date.getDate()}`.padStart(2, 0);
-  //   const month = `${date.getMonth() + 1}`.padStart(2, 0);
-  //   const year = date.getFullYear();
-  //   //print day-month-year
-  //   return `${day}/${month}/${year}`;
-  // }
   return new Intl.DateTimeFormat(locale).format(date);
 };
 
@@ -159,26 +150,23 @@ const displayMovements = function (acc, sort = false) {
     const date = new Date(acc.movementsDates[i]);
     const displayDate = formatMovementDate(date, acc.locale);
 
+    const formattedMovement = new Intl.NumberFormat(acc.locale, {
+      style: 'currency',
+      currency: acc.currency,
+    }).format(mov);
+
     const html = `
         <div class="movements__row">
             <div class="movements__type movements__type--${type}">
                 ${i + 1} ${type}
             </div>
             <div class="movements__date">${displayDate}</div>
-            <div class="movements__value">${mov.toFixed(2)} €</div>
+            <div class="movements__value">${formattedMovement}</div>
         </div>`;
     containerMovements.insertAdjacentHTML('afterbegin', html);
     // Added html template in movements div
   });
 };
-//#endregion
-
-//#region [ #2 Euro To USD - Map Method Example ]
-// const eurToUsd = 1.1;
-// const movementsUSD = account1.movements.map(function (mov) {
-//   return mov * eurToUsd;
-// });
-// console.log(movementsUSD);
 //#endregion
 
 //#region [ #3 Computing Usernames }
@@ -206,98 +194,62 @@ const deposits = account1.movements.filter(function (mov) {
 const withdrawal = account1.movements.filter(function (mov) {
   return mov < 0;
 });
-// console.log(deposits);
-// console.log(withdrawal);
 //#endregion
 
 //#region [ #5 Reduce Method - Balance calculated and displayed ]
 
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
+const calcDisplayBalance = function (acc) {
+  const balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
   // console.log(balance);
   currentAccount.balance = balance;
-  labelBalance.textContent = `${balance.toFixed(2)} €`;
+  const formattedBalance = new Intl.NumberFormat(acc.locale, {
+    style: 'currency',
+    currency: acc.currency,
+  }).format(balance);
+  labelBalance.textContent = `${formattedBalance}`;
 };
-//#endregion
-
-//#region [ CODING CHALLENGE #2 ]
-
-// console.log('CODING CHALLENGE #2');
-// const calcAverageHumanAge = function (ages) {
-//   const ageArr = ages.map(function (age) {
-//     if (age <= 2) {
-//       return age * 2;
-//     } else {
-//       return 16 + age * 4;
-//     }
-//   });
-//   console.log(ageArr);
-
-//   const filteredAgeArr = ageArr.filter(function (age) {
-//     return age > 18;
-//   });
-//   console.log(filteredAgeArr);
-
-//   const averageHumanAgeOfDogs = ageArr.reduce(
-//     (acc, mov) => acc + mov / filteredAgeArr.length,
-//     0
-//   );
-//   console.log(averageHumanAgeOfDogs);
-// };
-
-// calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
-// calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
-
 //#endregion
 
 //#region [ #4 Chaining Methods - EurTOUSD - in and out calculated and displayed ]
 
-const calcDisplaySummary = function (movements) {
-  const incomes = movements
+const formatCurrency = (value, locale, currency) => {
+  const formattedMov = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(value);
+  return formattedMov;
+};
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
     .filter(mov => mov > 0)
     .map(mov => mov * eurToUsd)
     .reduce((acc, mov) => acc + mov, 0);
   const totalIncome = Math.round(incomes);
-  labelSumIn.textContent = `${totalIncome.toFixed(2)} €`;
+  const formattedTotalIncome = formatCurrency(
+    totalIncome,
+    acc.locale,
+    acc.currency
+  );
+  labelSumIn.textContent = `${formattedTotalIncome}`;
 
-  const out = movements
+  const out = acc.movements
     .filter(mov => mov < 0)
     .map(mov => mov * eurToUsd)
     .reduce((acc, mov) => acc + mov, 0);
   const totalOut = Math.round(out);
-  labelSumOut.textContent = `${Math.abs(totalOut).toFixed(2)} €`;
+  const formattedTotalOut = formatCurrency(totalOut, acc.locale, acc.currency);
+  labelSumOut.textContent = `${formattedTotalOut}`;
 
-  const interest = movements
+  const interest = acc.movements
     .filter(mov => mov > 0)
     .map(deposit => (deposit * currentAccount.interestRate) / 100)
     .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
-  labelSumInterest.textContent = `${interest.toFixed(2)} €`;
+
+  const formattedInterest = formatCurrency(interest, acc.locale, acc.currency);
+  labelSumInterest.textContent = `${formattedInterest}`;
 };
-
-//#endregion
-
-//#region [ CODING CHALLENGE # 3 ]
-
-// console.log('CODING CHALLENGE #3');
-// const calcAverageHumanAge = function (ages) {
-//   const ageArr = ages
-//     .map(age => (age <= 2 ? age * 2 : 16 + age * 4))
-//     .filter(age => age > 18)
-//     .reduce((acc, mov) => acc + mov / ages.length, 0);
-//   console.log(ageArr);
-// };
-// calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
-
-//#endregion
-
-//#region [ #7 Find Method ]
-
-//it is not like filter method. it is not return new array.
-//it returns first element that can pass condition.
-// const account = accounts.find(acc => acc.owner === 'Jessica Davis');
-// console.log(account);
-//returns the object
 
 //#endregion
 
@@ -360,9 +312,9 @@ function updateUI() {
   //display movements
   displayMovements(currentAccount);
   //display balance
-  calcDisplayBalance(currentAccount.movements);
+  calcDisplayBalance(currentAccount);
   //display summary
-  calcDisplaySummary(currentAccount.movements);
+  calcDisplaySummary(currentAccount);
 }
 //#endregion
 
@@ -452,3 +404,18 @@ btnSort.addEventListener('click', function (e) {
 });
 
 //#endregion
+
+//Num convert examples
+// const num = 3884764.23;
+
+// const options = {
+//   style: 'currency', //unit - percent - currency
+//   unit: 'mile-per-hour', //celcius = if its currency unit will be ignored
+//   currency: 'EUR',
+//   // useGrouping: false,
+// };
+
+// console.log('US     : ', new Intl.NumberFormat('en-US', options).format(num));
+// console.log('GR     : ', new Intl.NumberFormat('de-DE', options).format(num));
+// console.log('TR     : ', new Intl.NumberFormat('tr-TR', options).format(num));
+// console.log('Locale : ', new Intl.NumberFormat(navigator.language).format(num));
