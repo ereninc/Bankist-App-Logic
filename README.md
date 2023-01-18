@@ -1,3 +1,3 @@
 # Bankist-App
  
-![bankist](https://user-images.githubusercontent.com/24496846/213200116-29d36b9b-2d35-4644-99bb-61807fe07c34.gif)
+![bankist](https://user-images.githubusercontent.com/24496846/213200928-1821f43d-5e4f-4241-84cd-1dfb535b82df.gif)
