@@ -15,12 +15,12 @@ const account1 = {
   movementsDates: [
     '2019-11-18T21:31:17.178Z',
     '2019-12-23T07:42:02.383Z',
-    '2020-01-28T09:15:04.904Z',
-    '2020-04-01T10:17:24.185Z',
-    '2020-05-08T14:11:59.604Z',
-    '2020-05-27T17:01:17.194Z',
-    '2020-07-11T23:36:17.929Z',
-    '2020-07-12T10:51:36.790Z',
+    '2023-01-10T09:15:04.904Z',
+    '2023-01-14T10:17:24.185Z',
+    '2023-01-15T14:11:59.604Z',
+    '2023-01-16T17:01:17.194Z',
+    '2023-01-17T05:36:17.929Z',
+    '2023-01-18T10:51:36.790Z',
   ],
   currency: 'EUR',
   locale: 'pt-PT', // de-DE
@@ -119,6 +119,30 @@ const inputClosePin = document.querySelector('.form__input--pin');
 const eurToUsd = 1.1;
 
 //#region [ #1 MOVEMENT DISPLAY ]
+
+const formatMovementDate = function (date, locale) {
+  const calcDaysPassed = (date1, date2) =>
+    Math.round(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
+
+  const daysPassed = calcDaysPassed(new Date(), date);
+
+  if (daysPassed === 0) return 'Today';
+  if (daysPassed === 1) return 'Yesterday';
+  if (daysPassed === 2) return '2 days ago';
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+  if (daysPassed > 7 && daysPassed <= 14) return 'A week ago';
+
+  //Changing to Intl format
+  // else {
+  //   const day = `${date.getDate()}`.padStart(2, 0);
+  //   const month = `${date.getMonth() + 1}`.padStart(2, 0);
+  //   const year = date.getFullYear();
+  //   //print day-month-year
+  //   return `${day}/${month}/${year}`;
+  // }
+  return new Intl.DateTimeFormat(locale).format(date);
+};
+
 // A function to display movements in movements div
 const displayMovements = function (acc, sort = false) {
   containerMovements.innerHTML = '';
@@ -133,11 +157,7 @@ const displayMovements = function (acc, sort = false) {
     // Got movement type value
 
     const date = new Date(acc.movementsDates[i]);
-    const day = `${date.getDate()}`.padStart(2, 0);
-    const month = `${date.getMonth() + 1}`.padStart(2, 0);
-    const year = date.getFullYear();
-    //print day-month-year
-    const displayDate = `${day}/${month}/${year}`;
+    const displayDate = formatMovementDate(date, acc.locale);
 
     const html = `
         <div class="movements__row">
@@ -145,7 +165,7 @@ const displayMovements = function (acc, sort = false) {
                 ${i + 1} ${type}
             </div>
             <div class="movements__date">${displayDate}</div>
-            <div class="movements__value">${mov} EUR</div>
+            <div class="movements__value">${mov.toFixed(2)} €</div>
         </div>`;
     containerMovements.insertAdjacentHTML('afterbegin', html);
     // Added html template in movements div
@@ -186,17 +206,17 @@ const deposits = account1.movements.filter(function (mov) {
 const withdrawal = account1.movements.filter(function (mov) {
   return mov < 0;
 });
-console.log(deposits);
-console.log(withdrawal);
+// console.log(deposits);
+// console.log(withdrawal);
 //#endregion
 
 //#region [ #5 Reduce Method - Balance calculated and displayed ]
 
 const calcDisplayBalance = function (movements) {
   const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  console.log(balance);
+  // console.log(balance);
   currentAccount.balance = balance;
-  labelBalance.textContent = `${balance} EUR`;
+  labelBalance.textContent = `${balance.toFixed(2)} €`;
 };
 //#endregion
 
@@ -238,21 +258,21 @@ const calcDisplaySummary = function (movements) {
     .map(mov => mov * eurToUsd)
     .reduce((acc, mov) => acc + mov, 0);
   const totalIncome = Math.round(incomes);
-  labelSumIn.textContent = `${totalIncome} EUR`;
+  labelSumIn.textContent = `${totalIncome.toFixed(2)} €`;
 
   const out = movements
     .filter(mov => mov < 0)
     .map(mov => mov * eurToUsd)
     .reduce((acc, mov) => acc + mov, 0);
   const totalOut = Math.round(out);
-  labelSumOut.textContent = `${Math.abs(totalOut)} EUR`;
+  labelSumOut.textContent = `${Math.abs(totalOut).toFixed(2)} €`;
 
   const interest = movements
     .filter(mov => mov > 0)
     .map(deposit => (deposit * currentAccount.interestRate) / 100)
     .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
-  labelSumInterest.textContent = `${interest} EUR`;
+  labelSumInterest.textContent = `${interest.toFixed(2)} €`;
 };
 
 //#endregion
@@ -308,13 +328,23 @@ btnLogin.addEventListener('click', function (e) {
 
     //create current date and time
     const now = new Date();
-    const day = `${now.getDate()}`.padStart(2, '0');
-    const month = `${now.getMonth() + 1}`.padStart(2, '0');
-    const year = now.getFullYear();
-    const hour = `${now.getHours()}`.padStart(2, '0');
-    const minutes = `${now.getMinutes()}`.padStart(2, '0');
-    //print day-month-year
-    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${minutes}`;
+    const options = {
+      hour: '2-digit',
+      minute: 'numeric',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      weekday: 'long',
+    };
+
+    const locale = navigator.language;
+    console.log(locale);
+    labelDate.textContent = new Intl.DateTimeFormat(
+      currentAccount.locale,
+      options
+    ).format(now);
+    //you can set browser based date type with change of 'en-US' to locale
+    //we use account property as a locale
 
     //clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
